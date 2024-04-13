@@ -33,6 +33,13 @@ app.get("/",(req,res)=>{
    res.send("Home Page");
 })
 
+app.get("/About",(req,res)=>{
+  res.send("Home Page");
+})
+
+
+
+
 
 
 const port = process.env.PORT || 5000; // Change port to 5000 or another available port
