@@ -38,10 +38,6 @@ app.get("/About",(req,res)=>{
 })
 
 
-
-
-
-
 const port = process.env.PORT || 5000; // Change port to 5000 or another available port
 
 mongoose

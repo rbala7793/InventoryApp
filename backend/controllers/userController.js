@@ -1,7 +1,10 @@
 const asyncHandler = require("express-async-handler");
 const User =require("../models/userModel");
+const Token = require("../models/tokenModel")
 const bycrypt = require("bcryptjs");
 const jwt= require("jsonwebtoken");
+const crypto = require("crypto");
+const { threadId } = require("worker_threads");
  
 
 const generateToken = async (id) =>{
@@ -202,11 +205,116 @@ const updateUser = asyncHandler ( async (req,res)=>{
 })
 
 
+const changePassword = asyncHandler ( async (req,res)=>{
+ 
+    const user = await User.findById(req.user._id);
+    if(!user){
+        res.status(400);
+        throw new Error("Invalid User");
+    }
+    const {oldPassword, password}= req.body;
+    if(!oldPassword || !password){
+        res.status(400);
+        throw new Error("Invalid User");
+    }
+    const checkOldPassword= await bycrypt.compare(oldPassword, user.password);
+     
+    if(!checkOldPassword){
+        res.status(400);
+        throw new Error("Invalid User");
+
+    }
+
+    if(user && oldPassword){
+          user.password = password;
+          user.save();
+
+          res.status(200).send("Password Updated Successfully");
+
+    }else{
+       
+        res.status(400);
+        throw new Error("Invalid User");
+     
+    }
+    
+
+
+ 
+})
+
+
+
+const forgetPassword = asyncHandler ( async (req,res)=>{
+    const {email} = req.body;
+    const user = await User.findOne({email});
+    if(!user){
+        res.status(400);
+        throw new Error("Invalid User");
+    }
+     let resetToken = crypto.randomBytes(32).toString("hex")+user._id;
+
+     let hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+     const checkToken = await Token.findOne({userId:user._id});
+
+     if(checkToken){
+         await checkToken.deleteOne();
+     }
+
+     await new Token({
+       userId: user._id,
+       token:hashedToken,
+       createdAt:new Date(),
+       expiresdAt: new Date() + 30 * (60 * 1000)
+ 
+     }).save();
+
+     const resetUrl = `${process.env.FRONT_URL}/resetPasword/${resetToken}`;
+
+
+     res.status(201).json({
+        message:"Mail sent Successfully"
+     });  
+ 
+ 
+})  
+
+const resetPassword =   asyncHandler ( async (req,res)=>{
+
+    const {password} = req.body;
+
+    const {token} = req.params;
+
+    let hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const userToken = await Token.findOne({
+        token:token,
+        expiresdAt : {$gt : new Date.now()}
+    });
+
+    if(!userToken){
+         res.status(200);
+         throw new Error("Invalid Token"); 
+    }
+
+    const user = await User.findOne({_id:userToken.userId});
+    user.password = password;
+    user.save()
+
+    res.status(200).json({message:"Success"})
+
+
+})  
+
 module.exports={
     registerUser,
     loginUser,
     logout,
     getUser,
     getLoginStatus,
-    updateUser
+    updateUser,
+    changePassword,
+    forgetPassword,
+    resetPassword
 }
