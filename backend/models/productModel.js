@@ -10,21 +10,41 @@ const tokenSchema = mongoose.Schema({
    
    name:{
     type:String,
-    required:[true,""],
+    required:[true,"Name Required"],
     trim:true
    },
-   token:{
+   sku:{
     type:String,
-    required:true
-   },token:{
+    required:[true,"Name Required"],
+    default:"SKU",
+    trim:true
+
+   },
+   category:{
     type:String,
-    required:true
-   },token:{
+    required:true,
+    trim:true
+   },
+   quantity:{
     type:String,
     required:true
    },
+   price:{
+    type:String,
+    required:true
+   },
+   description:{
+    type:String,
+    required:true
+   },
+   image:{
+    type:Object,
+    default:{}
+   },
 
+},{
+    timestamps:true
 })
 
-const Token =mongoose.model("Token",tokenSchema);
-module.exports = Token;
+const Product =mongoose.model("Product",productSchema);
+module.exports = Product;
